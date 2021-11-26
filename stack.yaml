@@ -41,6 +41,17 @@ packages:
 #   commit: e7b331f14bcffb8367cd58fbfc8b40ec7642100a
 #
 # extra-deps: []
+extra-deps:
+- diagrams-1.4.0.1
+- diagrams-contrib-1.4.4
+- diagrams-core-1.5.0
+- diagrams-lib-1.4.4
+- diagrams-svg-1.4.3
+- active-0.2.0.15@sha256:22e235aefdd47121db743e138d309d7529b0eea545f9add8c113ce8f15ccf83e,1767
+- dual-tree-0.2.3.0@sha256:bba5476c1cefc3802708a72ab22b5eab9e182cc065507f4a1f673ebdfc694bad,2884
+- force-layout-0.4.0.6@sha256:4adae4a45a09a9378ea87930f082a968767a2bc95f6b2122e11966c57046a01c,1287
+- monoid-extras-0.6@sha256:fabcab0a59ac48d8f271016cf8190b21969b202c760df2db85add2fef93d38b4,2197
+- svg-builder-0.1.1@sha256:22de54d326a6b6912e461e1302edb9108b02aac0b6a6368fcdc3c4a224d487fd,1440
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

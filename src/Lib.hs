@@ -7,6 +7,7 @@ import Data.List
 import Data.Maybe
 import Data.Monoid
 
+import ArrayUtils
 import Types
 
 isFilledIn :: Cell -> Bool
@@ -27,20 +28,11 @@ square (r, c) = [(a, b) | a <- [r' .. r' + 2], b <- [c' .. c' + 2]]
 neighbours :: Position -> [Position]
 neighbours (r, c) = (row r `union` col c `union` square (r, c)) \\ [(r, c)]
 
-mapGrid :: (Position -> Cell -> Cell) -> Grid -> Grid
-mapGrid f grid = listArray (bounds grid) $ map (uncurry f) $ assocs grid
-
-filterGrid :: (Position -> Cell -> Bool) -> Grid -> [(Position, Cell)]
-filterGrid pred grid = filter (uncurry pred) $ assocs grid 
-
-findGrid :: (Position -> Cell -> Bool) -> Grid -> Maybe (Position, Cell)
-findGrid p = listToMaybe . filterGrid p
-
 populateNotes :: Grid -> Grid
 populateNotes = amap (\cell -> cell {notes = [1 .. 9]})
 
 updateNotes :: Grid -> Grid
-updateNotes grid = mapGrid f grid
+updateNotes grid = mapArray f grid
   where
     f pos cell@Cell { notes = ns } =
       let others = mapMaybe (number . (grid !)) $ neighbours pos
@@ -51,7 +43,7 @@ setupNotes = updateNotes . populateNotes
 
 -- Look, I don't come up with the names
 nakedSingle :: Recommender
-nakedSingle grid = mkChange <$> findGrid isNakedSingle grid
+nakedSingle grid = mkChange <$> findArray isNakedSingle grid
   where
     mkChange (pos, Cell {notes = [n]}) = [FillInNum pos n]
     mkChange _ = error "This should never happen"

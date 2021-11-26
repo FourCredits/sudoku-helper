@@ -1,29 +1,10 @@
 module Main where
 
-import Graphics.Gloss
+import Diagrams.Backend.SVG
+import Diagrams.TwoD.Size
 
-window :: Display
-window = InWindow "Sudoku Helper" (800, 800) (10, 10)
-
-backgroundColor :: Color
-backgroundColor = white
-
-outsideBorder :: Picture
-outsideBorder = pictures
-  [ color black $ rectangleSolid size size
-  , color white $ rectangleSolid (size - thickness) (size - thickness)]
-  where
-    size = 400
-    -- should be even
-    thickness = 6
-
-caption :: Picture
-caption = translate (-200) (-200) $ scale factor factor $ text "hello, world!"
-  where
-    factor = 0.3
-
-picture :: Picture
-picture = pictures [outsideBorder, caption]
+import Rendering
+import Lib
 
 main :: IO ()
-main = display window backgroundColor picture
+main = renderSVG "output.svg" (dims2D 400 400) (renderGrid testGrid2)
