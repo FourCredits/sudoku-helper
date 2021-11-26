@@ -1,10 +1,10 @@
 name:                sudoku-helper
 version:             0.1.0.0
-github:              "githubuser/sudoku-helper"
+github:              "FourCredits/sudoku-helper"
 license:             BSD3
-author:              "Author name here"
-maintainer:          "example@example.com"
-copyright:           "2021 Author name here"
+author:              "Erik Grundy"
+maintainer:          "erik.grundy@gmail.com"
+copyright:           "2021 Erik Grundy"
 
 extra-source-files:
 - README.md
