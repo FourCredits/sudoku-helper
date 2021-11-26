@@ -7,28 +7,7 @@ import Data.List
 import Data.Maybe
 import Data.Monoid
 
-data Cell =
-  Cell
-    { number :: Maybe Int
-    , notes :: [Int]
-    }
-
-instance Show Cell where
-  show Cell { number = Just n } = show n
-  show Cell { number = Nothing } = " "
-
-type Grid = Array Position Cell
-
-type Position = (Int, Int)
-
-data Change
-  = RemoveNote Position Int
-  | FillInNum Position Int
-  deriving (Show, Eq)
-
-type Recommendation = [Change]
-
-type Recommender = Grid -> Maybe Recommendation
+import Types
 
 isFilledIn :: Cell -> Bool
 isFilledIn c = isJust (number c)
