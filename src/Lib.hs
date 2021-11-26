@@ -40,12 +40,10 @@ col :: Int -> [Position]
 col a = [(b, a) | b <- [0 .. 8]]
 
 square :: Position -> [Position]
-square (r, c) = do
-  let r' = 3 * (r `div` 3)
-      c' = 3 * (r `div` 3)
-  a <- [r' .. r' + 2]
-  b <- [c' .. c' + 2]
-  return (a, b)
+square (r, c) = [(a, b) | a <- [r' .. r' + 2], b <- [c' .. c' + 2]]
+  where
+    r' = 3 * (r `div` 3)
+    c' = 3 * (c `div` 3)
 
 neighbours :: Position -> [Position]
 neighbours (r, c) = (row r `union` col c `union` square (r, c)) \\ [(r, c)]
