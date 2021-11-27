@@ -1,5 +1,6 @@
 module Lib where
 
+import Control.Applicative
 import Control.Monad
 import Data.Array.IArray
 import Data.Foldable
@@ -28,8 +29,12 @@ square (r, c) = [(a, b) | a <- [r' .. r' + 2], b <- [c' .. c' + 2]]
 neighbours :: Position -> [Position]
 neighbours (r, c) = (row r `union` col c `union` square (r, c)) \\ [(r, c)]
 
-populateNotes :: Grid -> Grid
-populateNotes = amap (\cell -> cell {notes = [1 .. 9]})
+subsections :: Grid -> [[Position]]
+subsections grid = rows ++ cols ++ squares
+  where
+    rows = map row [0 .. 8]
+    cols = map col [0 .. 8]
+    squares = [square (r, c) | r <- [0, 3, 6], c <- [0, 3, 6]]
 
 updateNotes :: Grid -> Grid
 updateNotes grid = mapArray f grid
@@ -37,9 +42,6 @@ updateNotes grid = mapArray f grid
     f pos cell@Cell { notes = ns } =
       let others = mapMaybe (number . (grid !)) $ neighbours pos
        in cell { notes = ns \\ others }
-
-setupNotes :: Grid -> Grid
-setupNotes = updateNotes . populateNotes
 
 -- Look, I don't come up with the names
 nakedSingle :: Recommender
@@ -67,17 +69,40 @@ acceptRecommendation changes grid = foldr f grid changes
         cell = grid ! pos
         cell' = cell { notes = notes cell \\ [n] }
 
+isSolved :: Grid -> Bool
+isSolved grid = all (valid . map (grid !)) $ subsections grid
+  where
+    valid subsection =
+      all (isJust . number) subsection &&
+      length (nub subsection) == length subsection
+
+{-
+Continuously apply the recommender, until it either can't generate new
+recommendations, or it completes the grid. Returns (True, grid) if the grid is
+completed, or (False, grid) if it isn't, and this is as far as it got.
+-}
+solve :: Recommender -> Grid -> (Bool, Grid)
+solve recommender = go
+  where
+    go grid
+      | isSolved grid = (True, grid)
+      | otherwise =
+        case recommender grid of
+          Just r  -> go $ updateNotes $ acceptRecommendation r grid
+          Nothing -> (False, grid)
+
 -- io
 
 numsToGrid :: [Int] -> Grid
-numsToGrid ns = setupNotes $ listArray ((0, 0), (8, 8)) $ map makeCell ns
+numsToGrid = updateNotes . listArray ((0, 0), (8, 8)) . map makeCell
   where
     makeCell :: Int -> Cell
-    makeCell n = Cell number []
-      where
-        number = if n `elem` [1 .. 9]
-                    then Just n
-                    else Nothing
+    makeCell n =
+      Cell
+        (if n `elem` [1 .. 9]
+           then Just n
+           else Nothing)
+        [1 .. 9]
 
 testGrid, solvedGrid :: Grid
 

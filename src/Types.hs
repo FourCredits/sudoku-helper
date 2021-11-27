@@ -7,7 +7,7 @@ data Cell =
     { number :: Maybe Int
     , notes :: [Int]
     }
-  deriving (Show)
+  deriving (Show, Eq)
 
 type Position = (Int, Int)
 
