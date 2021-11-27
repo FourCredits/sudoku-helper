@@ -7,3 +7,5 @@ will do yet.
 
 - Add `solve` function
 - Add `isFinished` function
+- Strong lines for separating squares of 3x3 blocks
+- GUI instead of creating svg images
