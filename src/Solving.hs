@@ -1,4 +1,4 @@
-module Lib where
+module Solving where
 
 import Control.Applicative
 import Control.Monad
@@ -51,6 +51,10 @@ nakedSingle grid = mkChange <$> findArray isNakedSingle grid
     mkChange _ = error "This should never happen"
     isNakedSingle _ (Cell Nothing [_]) = True
     isNakedSingle _ _ = False
+
+nakedSubset :: Recommender
+nakedSingle grid = _ $ do
+  subsection <- subsections grid
 
 -- To make the overall recommender better, just add more recommenders to the list
 recommend :: Recommender
