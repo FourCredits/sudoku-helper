@@ -9,9 +9,14 @@ import Diagrams.Backend.SVG.CmdLine
 
 import Types
 import ArrayUtils
+import Solving
+
+renderSolution :: Grid -> Diagram B
+renderSolution grid =
+  hsep 1 [renderGrid grid, renderGrid (snd $ solve overallRecommender grid)]
 
 renderGrid :: Grid -> Diagram B
-renderGrid grid = fold $ mapArray f grid
+renderGrid = fold . mapArray f
   where
     f (r, c) = translate (V2 (fromIntegral c) (8 - fromIntegral r)) . renderCell
 
