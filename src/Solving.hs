@@ -4,6 +4,10 @@ import Data.Array.IArray
 import Data.Foldable
 import Data.List
 import Data.Maybe
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as I
+import Data.Set (Set)
+import qualified Data.Set as S
 
 import ArrayUtils
 import Types
@@ -38,23 +42,21 @@ updateNotes grid = mapArray f grid
   where
     f pos cell@Cell { notes = ns } =
       let others = mapMaybe (number . (grid !)) $ buddies pos
-       in cell { notes = ns \\ others }
+       in cell { notes = ns I.\\ I.fromList others }
 
 -- Look, I don't come up with the names
 nakedSingle :: Recommender
 nakedSingle grid = mkChange <$> findArray isNakedSingle grid
   where
-    mkChange (pos, Cell {notes = [n]}) = [FillInNum pos n]
-    mkChange _ = error "This should never happen"
-    isNakedSingle _ (Cell Nothing [_]) = True
-    isNakedSingle _ _ = False
+    mkChange (pos, Cell {notes = ns}) = [FillInNum pos (I.findMin ns)]
+    isNakedSingle _ = null . number
 
 subsets :: [a] -> [[a]]
 subsets = foldr (\x xs -> xs ++ map (x :) xs) [[]]
 
 validChange :: Grid -> Change -> Bool
 validChange grid (FillInNum pos _) = isNothing $ number $ grid ! pos
-validChange grid (RemoveNote pos n) = n `elem` notes (grid ! pos)
+validChange grid (RemoveNote pos n) = I.member n $ notes (grid ! pos)
 
 nakedSubset :: Recommender
 nakedSubset grid =
@@ -62,28 +64,32 @@ nakedSubset grid =
     house <- map filterBlanks $ houses grid
     let houseLength = length house
     subset <- subsets house
-    let subsetNotes = notesOfSubset subset
-        notesLength = length subsetNotes
+    let subsetNotes :: IntSet
+        subsetNotes = notesOfSubset subset
+        notesLength = I.size subsetNotes
         subsetInv = house \\ subset
         isNakedSubset =
           notesLength == length subset &&
           inRange (1, houseLength - 1) notesLength
     -- If there's only one element not in the subset, then that one
     -- element has a hidden single
-    return $ case (isNakedSubset, length subsetInv) of
-      (True, 0) -> Just $ mkHiddenSingle subsetInv subsetNotes
-      (True, _) -> Just $ mkNakedSubset subsetInv subsetNotes
-      _         -> Nothing
+    return $
+      case (isNakedSubset, length subsetInv) of
+        (True, 0) -> Just $ mkHiddenSingle subsetInv subsetNotes
+        (True, _) -> Just $ mkNakedSubset subsetInv subsetNotes
+        _ -> Nothing
   where
     mkHiddenSingle subsetInv subsetNotes =
       let posToFill = head subsetInv
-          numToFillWith = head $ notes (grid ! posToFill) \\ subsetNotes
+          numToFillWith = I.findMax $ notes (grid ! posToFill) I.\\ subsetNotes
        in [FillInNum posToFill numToFillWith]
     mkNakedSubset subsetInv subsetNotes =
-      filter (validChange grid) $ RemoveNote <$> subsetInv <*>  subsetNotes
+      filter (validChange grid) $
+      RemoveNote <$> subsetInv <*> I.toList subsetNotes
     filterBlanks = filter (not . isFilledIn . (grid !))
+    notesOfSubset :: [Position] -> IntSet
     notesOfSubset =
-      foldr (union . notes) [] . filter (not . isFilledIn) . map (grid !)
+      I.unions . map notes . filter (not . isFilledIn) . map (grid !)
 
 -- To make the overall recommender better, just add more recommenders to the list
 recommend :: Recommender
@@ -100,7 +106,7 @@ acceptRecommendation changes grid = foldr f grid changes
     f (RemoveNote pos n) grid = grid // [(pos, cell')]
       where
         cell = grid ! pos
-        cell' = cell { notes = notes cell \\ [n] }
+        cell' = cell { notes = I.delete n $ notes cell }
 
 isSolved :: Grid -> Bool
 isSolved grid = all (valid . map (grid !)) $ houses grid
@@ -132,10 +138,10 @@ numsToGrid = updateNotes . listArray ((0, 0), (8, 8)) . map makeCell
     makeCell :: Int -> Cell
     makeCell n =
       Cell
-        (if n `elem` [1 .. 9]
+        (if inRange (1, 9) n
            then Just n
            else Nothing)
-        [1 .. 9]
+        (I.fromDistinctAscList [1 .. 9])
 
 testGrid, solvedGrid :: Grid
 

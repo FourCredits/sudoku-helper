@@ -1,11 +1,13 @@
 module Types where
 
 import Data.Array.IArray
+import Data.IntSet (IntSet)
+import qualified Data.IntSet as S
 
 data Cell =
   Cell
     { number :: Maybe Int
-    , notes :: [Int]
+    , notes :: IntSet
     }
   deriving (Show, Eq)
 

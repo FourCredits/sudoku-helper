@@ -36,6 +36,7 @@ library
   build-depends:
       array
     , base >=4.7 && <5
+    , containers
     , diagrams
     , diagrams-lib
     , diagrams-svg
@@ -51,6 +52,7 @@ executable sudoku-helper-exe
   build-depends:
       array
     , base >=4.7 && <5
+    , containers
     , diagrams
     , diagrams-lib
     , diagrams-svg
@@ -68,6 +70,7 @@ test-suite sudoku-helper-test
   build-depends:
       array
     , base >=4.7 && <5
+    , containers
     , diagrams
     , diagrams-lib
     , diagrams-svg
