@@ -119,18 +119,17 @@ isSolved grid = all (valid . map (grid !)) $ houses grid
 
 {-
 Continuously apply the recommender, until it either can't generate new
-recommendations, or it completes the grid. Returns (True, grid) if the grid is
-completed, or (False, grid) if it isn't, and this is as far as it got.
+recommendations, or it completes the grid. Returns (rs, grid), where rs is the
+list of changes made, and grid is as far as it got.
 -}
-solve :: Recommender -> Grid -> (Bool, Grid)
-solve recommender = go
+solve :: Recommender -> Grid -> ([Recommendation], Grid)
+solve recommender = go []
   where
-    go grid
-      | isSolved grid = (True, grid)
-      | otherwise =
-        case recommender grid of
-          Just r  -> go $ updateNotes $ acceptRecommendation r grid
-          Nothing -> (False, grid)
+    go rs grid
+      | isSolved grid = (reverse rs, grid)
+      | Just r <- recommender grid =
+        go (r : rs) $ updateNotes $ acceptRecommendation r grid
+      | otherwise = (reverse rs, grid)
 
 -- io
 
