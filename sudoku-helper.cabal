@@ -26,8 +26,8 @@ source-repository head
 library
   exposed-modules:
       ArrayUtils
-      Lib
       Rendering
+      Solving
       Types
   other-modules:
       Paths_sudoku_helper
