@@ -21,8 +21,8 @@ codebase, rather than reinvent the wheel.
 - [ ] Strong lines for separating squares of 3x3 blocks
 - [ ] GUI instead of creating svg images
 - Additional solvers:
-  - [ ] hidden single
-  - [ ] naked pair/triple/etc.
-  - [ ] hidden pair/triple/etc.
+  - [x] hidden single
+  - [x] naked pair/triple/etc.
+  - [x] hidden pair/triple/etc.
   - [ ] x-wing
   - [ ] BUG +1 - should be fairly straightforward

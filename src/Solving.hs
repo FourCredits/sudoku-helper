@@ -1,18 +1,15 @@
 module Solving where
 
-import Control.Applicative
-import Control.Monad
 import Data.Array.IArray
 import Data.Foldable
 import Data.List
 import Data.Maybe
-import Data.Monoid
 
 import ArrayUtils
 import Types
 
 isFilledIn :: Cell -> Bool
-isFilledIn c = isJust (number c)
+isFilledIn = isJust . number
 
 row :: Int -> [Position]
 row a = [(a, b) | b <- [0 .. 8]]
@@ -52,13 +49,45 @@ nakedSingle grid = mkChange <$> findArray isNakedSingle grid
     isNakedSingle _ (Cell Nothing [_]) = True
     isNakedSingle _ _ = False
 
+subsets :: [a] -> [[a]]
+subsets = foldr (\x xs -> xs ++ map (x :) xs) [[]]
+
+validChange :: Grid -> Change -> Bool
+validChange grid (FillInNum pos _) = isNothing $ number $ grid ! pos
+validChange grid (RemoveNote pos n) = n `elem` notes (grid ! pos)
+
 nakedSubset :: Recommender
-nakedSingle grid = _ $ do
-  subsection <- subsections grid
+nakedSubset grid =
+  asum $ do
+    house <- map filterBlanks $ houses grid
+    let houseLength = length house
+    subset <- subsets house
+    let subsetNotes = notesOfSubset subset
+        notesLength = length subsetNotes
+        subsetInv = house \\ subset
+        isNakedSubset =
+          notesLength == length subset &&
+          inRange (1, houseLength - 1) notesLength
+    -- If there's only one element not in the subset, then that one
+    -- element has a hidden single
+    return $ case (isNakedSubset, length subsetInv) of
+      (True, 0) -> Just $ mkHiddenSingle subsetInv subsetNotes
+      (True, _) -> Just $ mkNakedSubset subsetInv subsetNotes
+      _         -> Nothing
+  where
+    mkHiddenSingle subsetInv subsetNotes =
+      let posToFill = head subsetInv
+          numToFillWith = head $ notes (grid ! posToFill) \\ subsetNotes
+       in [FillInNum posToFill numToFillWith]
+    mkNakedSubset subsetInv subsetNotes =
+      filter (validChange grid) $ RemoveNote <$> subsetInv <*>  subsetNotes
+    filterBlanks = filter (not . isFilledIn . (grid !))
+    notesOfSubset =
+      foldr (union . notes) [] . filter (not . isFilledIn) . map (grid !)
 
 -- To make the overall recommender better, just add more recommenders to the list
 recommend :: Recommender
-recommend grid = asum $ map ($ grid) [nakedSingle]
+recommend grid = asum $ map ($ grid) [nakedSingle, nakedSubset]
 
 acceptRecommendation :: Recommendation -> Grid -> Grid
 acceptRecommendation changes grid = foldr f grid changes
@@ -137,6 +166,19 @@ testGrid2 =
     , 6, 0, 4, 9, 0, 5, 1, 0, 3
     ]
 
+testGrid3 :: Grid
+testGrid3 =
+  numsToGrid
+    [ 2, 0, 0, 0, 0, 0, 0, 0, 0
+    , 4, 7, 0, 3, 0, 8, 0, 2, 0
+    , 9, 0, 1, 0, 0, 0, 8, 0, 4
+    , 6, 1, 4, 8, 7, 5, 9, 3, 2
+    , 3, 9, 7, 1, 2, 6, 4, 5, 8
+    , 8, 5, 2, 4, 9, 3, 7, 1, 6
+    , 1, 0, 3, 0, 0, 0, 5, 0, 7
+    , 5, 2, 0, 7, 0, 1, 0, 4, 0
+    , 7, 0, 0, 0, 0, 0, 0, 0, 0
+    ]
 
 solvedGrid =
   numsToGrid
@@ -150,3 +192,4 @@ solvedGrid =
     , 5, 8, 1, 7, 3, 6, 4, 9, 2
     , 4, 7, 3, 9, 8, 2, 5, 1, 6
     ]
+
