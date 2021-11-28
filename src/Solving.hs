@@ -20,27 +20,27 @@ row a = [(a, b) | b <- [0 .. 8]]
 col :: Int -> [Position]
 col a = [(b, a) | b <- [0 .. 8]]
 
-square :: Position -> [Position]
-square (r, c) = [(a, b) | a <- [r' .. r' + 2], b <- [c' .. c' + 2]]
+box :: Position -> [Position]
+box (r, c) = [(a, b) | a <- [r' .. r' + 2], b <- [c' .. c' + 2]]
   where
     r' = 3 * (r `div` 3)
     c' = 3 * (c `div` 3)
 
-neighbours :: Position -> [Position]
-neighbours (r, c) = (row r `union` col c `union` square (r, c)) \\ [(r, c)]
+buddies :: Position -> [Position]
+buddies (r, c) = (row r `union` col c `union` box (r, c)) \\ [(r, c)]
 
-subsections :: Grid -> [[Position]]
-subsections grid = rows ++ cols ++ squares
+houses :: Grid -> [[Position]]
+houses grid = rows ++ cols ++ boxes
   where
     rows = map row [0 .. 8]
     cols = map col [0 .. 8]
-    squares = [square (r, c) | r <- [0, 3, 6], c <- [0, 3, 6]]
+    boxes = [box (r, c) | r <- [0, 3, 6], c <- [0, 3, 6]]
 
 updateNotes :: Grid -> Grid
 updateNotes grid = mapArray f grid
   where
     f pos cell@Cell { notes = ns } =
-      let others = mapMaybe (number . (grid !)) $ neighbours pos
+      let others = mapMaybe (number . (grid !)) $ buddies pos
        in cell { notes = ns \\ others }
 
 -- Look, I don't come up with the names
@@ -74,7 +74,7 @@ acceptRecommendation changes grid = foldr f grid changes
         cell' = cell { notes = notes cell \\ [n] }
 
 isSolved :: Grid -> Bool
-isSolved grid = all (valid . map (grid !)) $ subsections grid
+isSolved grid = all (valid . map (grid !)) $ houses grid
   where
     valid subsection =
       all (isJust . number) subsection &&
