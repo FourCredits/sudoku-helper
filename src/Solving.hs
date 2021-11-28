@@ -94,8 +94,8 @@ nakedSubset grid =
     notesOfSubset = I.unions . map notes . filter isBlank . map (grid !)
 
 -- To make the overall recommender better, just add more recommenders to the list
-recommend :: Recommender
-recommend grid = asum $ map ($ grid) [nakedSingle, nakedSubset]
+overallRecommender :: Recommender
+overallRecommender grid = asum $ map ($ grid) [nakedSingle, nakedSubset]
 
 acceptRecommendation :: Recommendation -> Grid -> Grid
 acceptRecommendation changes grid = foldr f grid changes
