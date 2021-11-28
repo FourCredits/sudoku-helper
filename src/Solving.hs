@@ -15,6 +15,9 @@ import Types
 isFilledIn :: Cell -> Bool
 isFilledIn = isJust . number
 
+isBlank :: Cell -> Bool
+isBlank = isNothing . number
+
 row :: Int -> [Position]
 row a = [(a, b) | b <- [0 .. 8]]
 
@@ -55,7 +58,7 @@ subsets :: [a] -> [[a]]
 subsets = foldr (\x xs -> xs ++ map (x :) xs) [[]]
 
 validChange :: Grid -> Change -> Bool
-validChange grid (FillInNum pos _) = isNothing $ number $ grid ! pos
+validChange grid (FillInNum pos _) = isBlank $ grid ! pos
 validChange grid (RemoveNote pos n) = I.member n $ notes (grid ! pos)
 
 nakedSubset :: Recommender
@@ -75,7 +78,7 @@ nakedSubset grid =
     -- element has a hidden single
     return $
       case (isNakedSubset, length subsetInv) of
-        (True, 0) -> Just $ mkHiddenSingle subsetInv subsetNotes
+        (True, 1) -> Just $ mkHiddenSingle subsetInv subsetNotes
         (True, _) -> Just $ mkNakedSubset subsetInv subsetNotes
         _ -> Nothing
   where
@@ -86,10 +89,9 @@ nakedSubset grid =
     mkNakedSubset subsetInv subsetNotes =
       filter (validChange grid) $
       RemoveNote <$> subsetInv <*> I.toList subsetNotes
-    filterBlanks = filter (not . isFilledIn . (grid !))
+    filterBlanks = filter (isBlank . (grid !))
     notesOfSubset :: [Position] -> IntSet
-    notesOfSubset =
-      I.unions . map notes . filter (not . isFilledIn) . map (grid !)
+    notesOfSubset = I.unions . map notes . filter isBlank . map (grid !)
 
 -- To make the overall recommender better, just add more recommenders to the list
 recommend :: Recommender
