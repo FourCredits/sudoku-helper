@@ -52,7 +52,7 @@ nakedSingle :: Recommender
 nakedSingle grid = mkChange <$> findArray isNakedSingle grid
   where
     mkChange (pos, Cell {notes = ns}) = [FillInNum pos (I.findMin ns)]
-    isNakedSingle _ = null . number
+    isNakedSingle _ cell = isBlank cell && I.size (notes cell) == 1
 
 subsets :: [a] -> [[a]]
 subsets = foldr (\x xs -> xs ++ map (x :) xs) [[]]
