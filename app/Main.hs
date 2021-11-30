@@ -4,7 +4,7 @@ import Diagrams.Backend.SVG
 import Diagrams.TwoD.Size
 
 import Rendering
-import Solving
+import TestGrids
 
 main :: IO ()
-main = renderSVG "output.svg" (dims2D 800 400) (renderSolution testGrid3)
+main = renderSVG "output.svg" (dims2D 800 400) (renderSolution testGrid4)
