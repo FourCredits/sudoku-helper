@@ -1,5 +1,6 @@
 module Solving where
 
+import Control.Monad
 import Data.Array.IArray
 import Data.Foldable
 import Data.List
@@ -33,8 +34,8 @@ box (r, c) = [(a, b) | a <- [r' .. r' + 2], b <- [c' .. c' + 2]]
 buddies :: Position -> [Position]
 buddies (r, c) = (row r `union` col c `union` box (r, c)) \\ [(r, c)]
 
-houses :: Grid -> [[Position]]
-houses grid = rows ++ cols ++ boxes
+houses :: [[Position]]
+houses = rows ++ cols ++ boxes
   where
     rows = map row [0 .. 8]
     cols = map col [0 .. 8]
@@ -54,6 +55,20 @@ nakedSingle grid = mkChange <$> findArray isNakedSingle grid
     mkChange (pos, Cell {notes = ns}) = [FillInNum pos (I.findMin ns)]
     isNakedSingle _ cell = isBlank cell && I.size (notes cell) == 1
 
+filterBlanks :: Grid -> [Position] -> [Position]
+filterBlanks grid = filter (isBlank . (grid !))
+
+hiddenSingle :: Recommender
+hiddenSingle grid =
+  asum $ do
+    house <- map (filterBlanks grid) houses
+    n <- [1 .. 9]
+    case filter (hasNote n . (grid !)) house of
+      [pos] -> return $ Just [FillInNum pos n]
+      _ -> return Nothing
+  where
+    hasNote n cell = I.member n $ notes cell
+
 subsets :: [a] -> [[a]]
 subsets = foldr (\x xs -> xs ++ map (x :) xs) [[]]
 
@@ -64,58 +79,47 @@ validChange grid (RemoveNote pos n) = I.member n $ notes (grid ! pos)
 nakedSubset :: Recommender
 nakedSubset grid =
   asum $ do
-    house <- map filterBlanks $ houses grid
+    house <- map (filterBlanks grid) houses
     let houseLength = length house
     subset <- subsets house
-    let subsetNotes :: IntSet
-        subsetNotes = notesOfSubset subset
+    let subsetNotes = notesOfSubset subset
         notesLength = I.size subsetNotes
-        subsetInv = house \\ subset
         isNakedSubset =
           notesLength == length subset &&
-          inRange (1, houseLength - 1) notesLength
-    -- If there's only one element not in the subset, then that one
-    -- element has a hidden single
-    return $
-      case (isNakedSubset, length subsetInv) of
-        (True, 1) -> Just $ mkHiddenSingle subsetInv subsetNotes
-        (True, _) -> Just $ mkNakedSubset subsetInv subsetNotes
-        _ -> Nothing
+          inRange (2, houseLength - 1) notesLength
+        changes = RemoveNote <$> house \\ subset <*> I.toList subsetNotes
+        validChanges = filter (validChange grid) changes
+    guard isNakedSubset
+    -- There needs to be changes to make
+    guard $ not $ null validChanges
+    return $ Just validChanges
   where
-    mkHiddenSingle subsetInv subsetNotes =
-      let posToFill = head subsetInv
-          numToFillWith = I.findMax $ notes (grid ! posToFill) I.\\ subsetNotes
-       in [FillInNum posToFill numToFillWith]
-    mkNakedSubset subsetInv subsetNotes =
-      filter (validChange grid) $
-      RemoveNote <$> subsetInv <*> I.toList subsetNotes
-    filterBlanks = filter (isBlank . (grid !))
-    notesOfSubset :: [Position] -> IntSet
     notesOfSubset = I.unions . map notes . filter isBlank . map (grid !)
 
 -- To make the overall recommender better, just add more recommenders to the list
 overallRecommender :: Recommender
-overallRecommender grid = asum $ map ($ grid) [nakedSingle, nakedSubset]
+overallRecommender grid =
+  asum $ map ($ grid) [nakedSingle, hiddenSingle, nakedSubset]
+
+acceptChange :: Change -> Grid -> Grid
+acceptChange (FillInNum pos n) grid = grid // [(pos, cell')]
+  where
+    cell = grid ! pos
+    cell' = cell {number = Just n}
+acceptChange (RemoveNote pos n) grid = grid // [(pos, cell')]
+  where
+    cell = grid ! pos
+    cell' = cell {notes = I.delete n $ notes cell}
 
 acceptRecommendation :: Recommendation -> Grid -> Grid
-acceptRecommendation changes grid = foldr f grid changes
-  where
-    f :: Change -> Grid -> Grid
-    f (FillInNum pos n) grid = grid // [(pos, cell')]
-      where
-        cell = grid ! pos
-        cell' = cell { number = Just n }
-    f (RemoveNote pos n) grid = grid // [(pos, cell')]
-      where
-        cell = grid ! pos
-        cell' = cell { notes = I.delete n $ notes cell }
+acceptRecommendation changes grid = foldr acceptChange grid changes
 
 isSolved :: Grid -> Bool
-isSolved grid = all (valid . map (grid !)) $ houses grid
+isSolved grid = all (valid . map (grid !)) houses
   where
-    valid subsection =
-      all (isJust . number) subsection &&
-      length (nub subsection) == length subsection
+    valid house =
+      all (isJust . number) house &&
+      length (nub house) == length house
 
 {-
 Continuously apply the recommender, until it either can't generate new
@@ -126,7 +130,6 @@ solve :: Recommender -> Grid -> ([Recommendation], Grid)
 solve recommender = go []
   where
     go rs grid
-      | isSolved grid = (reverse rs, grid)
       | Just r <- recommender grid =
         go (r : rs) $ updateNotes $ acceptRecommendation r grid
       | otherwise = (reverse rs, grid)
