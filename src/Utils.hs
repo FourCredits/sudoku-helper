@@ -1,4 +1,4 @@
-module ArrayUtils where
+module Utils where
 
 import Data.Array.IArray
 import Data.Maybe
@@ -11,3 +11,6 @@ filterArray pred = filter (uncurry pred) . assocs
 
 findArray :: (Ix i, IArray a e) => (i -> e -> Bool) -> a i e -> Maybe (i, e)
 findArray p = listToMaybe . filterArray p
+
+subsets :: [a] -> [[a]]
+subsets = foldr (\x xs -> xs ++ map (x :) xs) [[]]

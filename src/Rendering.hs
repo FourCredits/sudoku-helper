@@ -8,7 +8,7 @@ import Diagrams.Prelude
 import Diagrams.Backend.SVG.CmdLine
 
 import Types
-import ArrayUtils
+import Utils
 import Solving
 
 renderSolution :: Grid -> Diagram B

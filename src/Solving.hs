@@ -10,7 +10,7 @@ import qualified Data.IntSet as I
 import Data.Set (Set)
 import qualified Data.Set as S
 
-import ArrayUtils
+import Utils
 import Types
 
 -- Cell level manipulations
@@ -56,9 +56,6 @@ updateNotes grid = mapArray f grid
 
 filterBlanks :: Grid -> [Position] -> [Position]
 filterBlanks grid = filter (isBlank . (grid !))
-
-subsets :: [a] -> [[a]]
-subsets = foldr (\x xs -> xs ++ map (x :) xs) [[]]
 
 acceptChange :: Change -> Grid -> Grid
 acceptChange (FillInNum pos n) grid = grid // [(pos, cell')]
