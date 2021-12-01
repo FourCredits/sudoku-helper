@@ -176,16 +176,14 @@ bug grid =
   let blanks = filter (isBlank . snd) $ assocs grid
       triValues = filter ((== 3) . I.size . notes . snd) blanks
       others = map (notes . snd) $ blanks \\ triValues
-  in
-    case (triValues, all ((== 2) . I.size) others) of
-      ([(pos, cell)], True) ->
-        let n = head $ do
-                        let buds = box pos
-                        n <- I.toList $ notes cell
-                        guard $ 3 == length (filter (hasNote n . (grid !)) buds)
-                        return n
-        in Just [FillInNum pos n]
-      _ -> Nothing
+   in case (triValues, all ((== 2) . I.size) others) of
+        ([(pos, cell)], True) ->
+          let buds = map (grid !) $ box pos
+              Just n =
+                find (\n -> 3 == length (filter (hasNote n) buds)) $
+                I.toList $ notes cell
+           in Just [FillInNum pos n]
+        _ -> Nothing
 
 -- To make the overall recommender better, just add more recommenders
 overallRecommender :: Recommender
