@@ -6,7 +6,7 @@ import Types
 import Solving
 
 numsToGrid :: [Int] -> Grid
-numsToGrid = updateNotes . listArray ((0, 0), (8, 8)) . map makeCell
+numsToGrid = updateNotes . listArray ((1, 1), (9, 9)) . map makeCell
   where
     makeCell :: Int -> Cell
     makeCell n =
@@ -98,16 +98,16 @@ testGrid5 =
 testGrid6 :: Grid
 testGrid6 =
   acceptRecommendation
-    [ RemoveNote (3, 5) 5
-    , RemoveNote (3, 5) 8
-    , RemoveNote (3, 8) 8
-    , RemoveNote (7, 3) 2
-    , RemoveNote (7, 3) 8
-    , RemoveNote (7, 5) 4
-    , RemoveNote (7, 5) 8
-    , RemoveNote (7, 5) 9
-    , RemoveNote (1, 5) 4
-    , RemoveNote (1, 5) 6
+    [ RemoveNote (4, 6) 5
+    , RemoveNote (4, 6) 8
+    , RemoveNote (4, 9) 8
+    , RemoveNote (8, 4) 2
+    , RemoveNote (8, 4) 8
+    , RemoveNote (8, 6) 4
+    , RemoveNote (8, 6) 8
+    , RemoveNote (8, 6) 9
+    , RemoveNote (2, 6) 4
+    , RemoveNote (2, 6) 6
     ] $
   numsToGrid
     [ 0, 1, 7, 9, 0, 3, 6, 0, 0

@@ -25,27 +25,27 @@ hasNote n = elem n . notes
 -- Working with houses
 
 row :: Int -> [Position]
-row a = [(a, b) | b <- [0 .. 8]]
+row a = [(a, b) | b <- [1 .. 9]]
 
 col :: Int -> [Position]
-col a = [(b, a) | b <- [0 .. 8]]
+col a = [(b, a) | b <- [1 .. 9]]
 
 box :: Position -> [Position]
 box (r, c) = [(a, b) | a <- [r' .. r' + 2], b <- [c' .. c' + 2]]
   where
-    r' = 3 * (r `div` 3)
-    c' = 3 * (c `div` 3)
+    r' = 1 + 3 * ((r - 1) `div` 3)
+    c' = 1 + 3 * ((c - 1) `div` 3)
 
 buddies :: Position -> [Position]
 buddies (r, c) = (row r `union` col c `union` box (r, c)) \\ [(r, c)]
 
 rows, cols, boxes, houses :: [[Position]]
 
-rows = map row [0 .. 8]
+rows = map row [1 .. 9]
 
-cols = map col [0 .. 8]
+cols = map col [1 .. 9]
 
-boxes = [box (r, c) | r <- [0, 3, 6], c <- [0, 3, 6]]
+boxes = [box (r, c) | r <- [1, 4, 9], c <- [1, 4, 9]]
 
 houses = rows ++ cols ++ boxes
 
