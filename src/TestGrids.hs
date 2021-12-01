@@ -1,7 +1,6 @@
 module TestGrids where
 
 import Data.Array
-import qualified Data.IntSet as I
 
 import Types
 import Solving
@@ -15,7 +14,7 @@ numsToGrid = updateNotes . listArray ((0, 0), (8, 8)) . map makeCell
         (if inRange (1, 9) n
            then Just n
            else Nothing)
-        (I.fromDistinctAscList [1 .. 9])
+        [1 .. 9]
 
 testGrid, solvedGrid :: Grid
 

@@ -3,7 +3,6 @@ module Rendering where
 import Data.Array.IArray
 import Data.Foldable
 import Data.Maybe
-import qualified Data.IntSet as I
 import Diagrams.Prelude
 import Diagrams.Backend.SVG.CmdLine
 
@@ -24,7 +23,7 @@ renderCell :: Cell -> Diagram B
 renderCell Cell {number = Just n} =
   (show n & text & scale 0.9) <> (square 1 & fc lightgrey)
 renderCell Cell {notes = ns} =
-  (foldMap renderNote (I.toList ns) & scale 0.9) <> square 1
+  (foldMap renderNote ns & scale 0.9) <> square 1
 
 renderNote :: Int -> Diagram B
 renderNote n = scale (1 / 3) $ translate (V2 x y) $ text $ show n

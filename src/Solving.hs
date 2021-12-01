@@ -7,10 +7,6 @@ import Data.Foldable
 import Data.Function
 import Data.List
 import Data.Maybe
-import Data.IntSet (IntSet)
-import qualified Data.IntSet as I
-import Data.Set (Set)
-import qualified Data.Set as S
 
 import Utils
 import Types
@@ -24,7 +20,7 @@ isBlank :: Cell -> Bool
 isBlank = isNothing . number
 
 hasNote :: Int -> Cell -> Bool
-hasNote n = I.member n . notes
+hasNote n = elem n . notes
 
 -- Working with houses
 
@@ -60,7 +56,7 @@ updateNotes grid = mapArray f grid
   where
     f pos cell@Cell { notes = ns } =
       let others = mapMaybe (number . (grid !)) $ buddies pos
-       in cell { notes = ns I.\\ I.fromList others }
+       in cell { notes = ns \\ others }
 
 filterBlanks :: Grid -> [Position] -> [Position]
 filterBlanks grid = filter (isBlank . (grid !))
@@ -73,14 +69,14 @@ acceptChange (FillInNum pos n) grid = grid // [(pos, cell')]
 acceptChange (RemoveNote pos n) grid = grid // [(pos, cell')]
   where
     cell = grid ! pos
-    cell' = cell {notes = I.delete n $ notes cell}
+    cell' = cell {notes = delete n $ notes cell}
 
 acceptRecommendation :: Recommendation -> Grid -> Grid
 acceptRecommendation changes grid = foldr acceptChange grid changes
 
 validChange :: Grid -> Change -> Bool
 validChange grid (FillInNum pos _) = isBlank $ grid ! pos
-validChange grid (RemoveNote pos n) = I.member n $ notes (grid ! pos)
+validChange grid (RemoveNote pos n) = n `elem` notes (grid ! pos)
 
 isSolved :: Grid -> Bool
 isSolved grid = all (valid . map (grid !)) houses
@@ -93,8 +89,8 @@ intersectingHouses :: [Position] -> [[Position]]
 intersectingHouses house = filter ((== 3) . length . intersect house) houses
 
 -- Finds the union of the notes of a particular group of positions
-notesUnion :: Grid -> [Position] -> IntSet
-notesUnion grid = I.unions . map (notes . (grid !))
+notesUnion :: Grid -> [Position] -> [Int]
+notesUnion grid = foldr union [] . map (notes . (grid !))
 
 {-
 Continuously apply the recommender, until it either can't generate new
@@ -115,8 +111,8 @@ solve recommender = go []
 nakedSingle :: Recommender
 nakedSingle grid = mkChange <$> findArray isNakedSingle grid
   where
-    mkChange (pos, Cell {notes = ns}) = [FillInNum pos (I.findMin ns)]
-    isNakedSingle _ cell = isBlank cell && I.size (notes cell) == 1
+    mkChange (pos, Cell {notes = [n]}) = [FillInNum pos n]
+    isNakedSingle _ cell = isBlank cell && length (notes cell) == 1
 
 hiddenSingle :: Recommender
 hiddenSingle grid =
@@ -134,18 +130,18 @@ nakedSubset grid =
     let houseLength = length house
     subset <- subsets house
     let subsetNotes = notesOfSubset subset
-        notesLength = I.size subsetNotes
+        notesLength = length subsetNotes
         isNakedSubset =
           notesLength == length subset &&
           inRange (2, houseLength - 1) notesLength
-        changes = RemoveNote <$> house \\ subset <*> I.toList subsetNotes
+        changes = RemoveNote <$> house \\ subset <*> subsetNotes
         validChanges = filter (validChange grid) changes
     guard isNakedSubset
     -- There needs to be changes to make
     guard $ not $ null validChanges
     return $ Just validChanges
   where
-    notesOfSubset = I.unions . map notes . filter isBlank . map (grid !)
+    notesOfSubset = foldr union [] . map notes . filter isBlank . map (grid !)
 
 intersection :: Recommender
 intersection grid =
@@ -154,8 +150,7 @@ intersection grid =
     other <- map (filterBlanks grid) $ intersectingHouses house
     let shared = house `intersect` other
         alignedNotes =
-          I.toList $
-          (I.difference `on` notesUnion grid) shared (house \\ other)
+          ((\\) `on` notesUnion grid) shared (house \\ other)
         changes =
           filter (validChange grid) $
           RemoveNote <$> (other \\ shared) <*> alignedNotes
@@ -174,14 +169,13 @@ other cells in any given house.
 bug :: Recommender
 bug grid =
   let blanks = filter (isBlank . snd) $ assocs grid
-      triValues = filter ((== 3) . I.size . notes . snd) blanks
+      triValues = filter ((== 3) . length . notes . snd) blanks
       others = map (notes . snd) $ blanks \\ triValues
-   in case (triValues, all ((== 2) . I.size) others) of
+   in case (triValues, all ((== 2) . length) others) of
         ([(pos, cell)], True) ->
           let buds = map (grid !) $ box pos
               Just n =
-                find (\n -> 3 == length (filter (hasNote n) buds)) $
-                I.toList $ notes cell
+                find (\n -> 3 == length (filter (hasNote n) buds)) $ notes cell
            in Just [FillInNum pos n]
         _ -> Nothing
 
