@@ -25,9 +25,13 @@ codebase, rather than reinvent the wheel.
 - [x] Keep track of changes made for solving
 - [ ] Keep track of techniques employed for solving
 - [x] Use sets rather than lists for notes
+- [ ] Switch from always passing around positions, and use tuples of position
+  and cell.
 - Additional solvers:
   - [x] hidden single
   - [x] naked pair/triple/etc.
   - [x] hidden pair/triple/etc.
   - [ ] x-wing
-  - [ ] BUG +1 - should be fairly straightforward
+  - [x] intersection
+  - [x] BUG +1 - should be fairly straightforward
+    - It was not fairly straightforward
