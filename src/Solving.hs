@@ -21,6 +21,9 @@ isFilledIn = isJust . number
 isBlank :: Cell -> Bool
 isBlank = isNothing . number
 
+hasNote :: Int -> Cell -> Bool
+hasNote n = I.member n . notes
+
 -- Working with houses
 
 row :: Int -> [Position]
@@ -111,8 +114,6 @@ hiddenSingle grid =
     case filter (hasNote n . (grid !)) house of
       [pos] -> return $ Just [FillInNum pos n]
       _ -> return Nothing
-  where
-    hasNote n cell = I.member n $ notes cell
 
 nakedSubset :: Recommender
 nakedSubset grid =
@@ -134,7 +135,32 @@ nakedSubset grid =
   where
     notesOfSubset = I.unions . map notes . filter isBlank . map (grid !)
 
--- To make the overall recommender better, just add more recommenders to the list
+{-
+BUG stands for 'bi-value universal grave'. It says that any grid where the
+remaining cells all have 2 notes is invalid, as that grid can have two
+solutions. This isn't immediately intuitive, but if you go through it manually,
+you'll see that it's true.
+As such, whenever a grid has remaining cells such that all have two notes except
+one, which has three, you can fill in that cell with the note it shares with two
+other cells in any given house.
+-}
+bug :: Recommender
+bug grid =
+  let blanks = filter (isBlank . snd) $ assocs grid
+      triValues = filter ((== 3) . I.size . notes . snd) blanks
+      others = map (notes . snd) $ blanks \\ triValues
+  in
+    case (triValues, all ((== 2) . I.size) others) of
+      ([(pos, cell)], True) ->
+        let n = head $ do
+                        let buds = box pos
+                        n <- I.toList $ notes cell
+                        guard $ 3 == length (filter (hasNote n . (grid !)) buds)
+                        return n
+        in Just [FillInNum pos n]
+      _ -> Nothing
+
+-- To make the overall recommender better, just add more recommenders
 overallRecommender :: Recommender
 overallRecommender grid =
-  asum $ map ($ grid) [nakedSingle, hiddenSingle, nakedSubset]
+  asum $ map ($ grid) [nakedSingle, hiddenSingle, nakedSubset, bug]
