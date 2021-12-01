@@ -1,8 +1,10 @@
 module Solving where
 
+import Control.Applicative
 import Control.Monad
 import Data.Array.IArray
 import Data.Foldable
+import Data.Function
 import Data.List
 import Data.Maybe
 import Data.IntSet (IntSet)
@@ -41,12 +43,15 @@ box (r, c) = [(a, b) | a <- [r' .. r' + 2], b <- [c' .. c' + 2]]
 buddies :: Position -> [Position]
 buddies (r, c) = (row r `union` col c `union` box (r, c)) \\ [(r, c)]
 
-houses :: [[Position]]
+rows, cols, boxes, houses :: [[Position]]
+
+rows = map row [0 .. 8]
+
+cols = map col [0 .. 8]
+
+boxes = [box (r, c) | r <- [0, 3, 6], c <- [0, 3, 6]]
+
 houses = rows ++ cols ++ boxes
-  where
-    rows = map row [0 .. 8]
-    cols = map col [0 .. 8]
-    boxes = [box (r, c) | r <- [0, 3, 6], c <- [0, 3, 6]]
 
 -- Utility functions
 
@@ -83,6 +88,13 @@ isSolved grid = all (valid . map (grid !)) houses
     valid house =
       all (isJust . number) house &&
       length (nub house) == length house
+
+intersectingHouses :: [Position] -> [[Position]]
+intersectingHouses house = filter ((== 3) . length . intersect house) houses
+
+-- Finds the union of the notes of a particular group of positions
+notesUnion :: Grid -> [Position] -> IntSet
+notesUnion grid = I.unions . map (notes . (grid !))
 
 {-
 Continuously apply the recommender, until it either can't generate new
@@ -135,6 +147,21 @@ nakedSubset grid =
   where
     notesOfSubset = I.unions . map notes . filter isBlank . map (grid !)
 
+intersection :: Recommender
+intersection grid =
+  asum $ do
+    house <- map (filterBlanks grid) houses
+    other <- map (filterBlanks grid) $ intersectingHouses house
+    let shared = house `intersect` other
+        alignedNotes =
+          I.toList $
+          (I.difference `on` notesUnion grid) shared (house \\ other)
+        changes =
+          filter (validChange grid) $
+          RemoveNote <$> (other \\ shared) <*> alignedNotes
+    guard $ not $ null changes
+    return $ Just changes
+
 {-
 BUG stands for 'bi-value universal grave'. It says that any grid where the
 remaining cells all have 2 notes is invalid, as that grid can have two
@@ -162,5 +189,6 @@ bug grid =
 
 -- To make the overall recommender better, just add more recommenders
 overallRecommender :: Recommender
-overallRecommender grid =
-  asum $ map ($ grid) [nakedSingle, hiddenSingle, nakedSubset, bug]
+overallRecommender grid = asum $ map ($ grid) solvers
+  where
+    solvers = [nakedSingle, hiddenSingle, nakedSubset, intersection, bug]

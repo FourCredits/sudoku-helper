@@ -95,6 +95,33 @@ testGrid5 =
     , 1, 5, 7, 0, 0, 0, 4, 2, 9
     ]
 
+-- Should result in a intersection; remove 6 from (2, 2)
+testGrid6 :: Grid
+testGrid6 =
+  acceptRecommendation
+    [ RemoveNote (3, 5) 5
+    , RemoveNote (3, 5) 8
+    , RemoveNote (3, 8) 8
+    , RemoveNote (7, 3) 2
+    , RemoveNote (7, 3) 8
+    , RemoveNote (7, 5) 4
+    , RemoveNote (7, 5) 8
+    , RemoveNote (7, 5) 9
+    , RemoveNote (1, 5) 4
+    , RemoveNote (1, 5) 6
+    ] $
+  numsToGrid
+    [ 0, 1, 7, 9, 0, 3, 6, 0, 0
+    , 0, 0, 0, 0, 8, 0, 0, 0, 0
+    , 9, 0, 0, 0, 0, 0, 5, 0, 7
+    , 0, 7, 2, 0, 1, 0, 4, 3, 0
+    , 0, 0, 0, 4, 0, 2, 0, 7, 0
+    , 0, 6, 4, 3, 7, 0, 2, 5, 0
+    , 7, 0, 1, 0, 0, 0, 0, 6, 5
+    , 0, 0, 0, 0, 3, 0, 0, 0, 0
+    , 0, 0, 5, 6, 0, 1, 7, 2, 0
+    ]
+
 solvedGrid =
   numsToGrid
     [ 6, 9, 4, 1, 7, 5, 8, 2, 3
