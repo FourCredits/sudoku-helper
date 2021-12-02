@@ -76,7 +76,9 @@ acceptRecommendation changes grid = foldr acceptChange grid changes
 
 validChange :: Grid -> Change -> Bool
 validChange grid (FillInNum pos _) = isBlank $ grid ! pos
-validChange grid (RemoveNote pos n) = n `elem` notes (grid ! pos)
+validChange grid (RemoveNote pos n) = isBlank cell && n `elem` notes cell
+  where
+    cell = grid ! pos
 
 isSolved :: Grid -> Bool
 isSolved grid = all (valid . map (grid !)) houses
@@ -90,7 +92,27 @@ intersectingHouses house = filter ((== 3) . length . intersect house) houses
 
 -- Finds the union of the notes of a particular group of positions
 notesUnion :: Grid -> [Position] -> [Int]
-notesUnion grid = foldr union [] . map (notes . (grid !))
+notesUnion grid = foldr (union . notes) [] . filter isBlank . map (grid !)
+
+makeRecommendation :: Grid -> Recommendation -> Maybe Recommendation
+makeRecommendation grid changes =
+  case filter (validChange grid) changes of
+    [] -> Nothing
+    changes' -> Just changes'
+
+-- For help with x wings, swordfishes, etc.
+housesWithAOrFewerOfNoteB :: Int -> Int -> Grid -> [[Position]]
+housesWithAOrFewerOfNoteB a b grid = do
+  house <- rows ++ cols
+  guard $ Just b `notElem` map (number . (grid !)) house
+  let house' = filter (liftA2 (&&) (elem b . notes) isBlank . (grid !)) house
+  guard $ a >= length house'
+  return house'
+
+isRectangle :: Position -> Position -> Position -> Position -> Bool
+isRectangle (r1, c1) (r2, c2) (r3, c3) (r4, c4) =
+  (r1 == r2 && r3 == r4 && c1 == c3 && c2 == c4) ||
+  (c1 == c2 && c3 == c4 && r1 == r3 && r2 == r4)
 
 {-
 Continuously apply the recommender, until it either can't generate new
@@ -129,19 +151,14 @@ nakedSubset grid =
     house <- map (filterBlanks grid) houses
     let houseLength = length house
     subset <- subsets house
-    let subsetNotes = notesOfSubset subset
+    let subsetNotes = notesUnion grid subset
         notesLength = length subsetNotes
         isNakedSubset =
           notesLength == length subset &&
           inRange (2, houseLength - 1) notesLength
-        changes = RemoveNote <$> house \\ subset <*> subsetNotes
-        validChanges = filter (validChange grid) changes
     guard isNakedSubset
-    -- There needs to be changes to make
-    guard $ not $ null validChanges
-    return $ Just validChanges
-  where
-    notesOfSubset = foldr union [] . map notes . filter isBlank . map (grid !)
+    return $
+      makeRecommendation grid $ RemoveNote <$> house \\ subset <*> subsetNotes
 
 intersection :: Recommender
 intersection grid =
@@ -149,20 +166,30 @@ intersection grid =
     house <- map (filterBlanks grid) houses
     other <- map (filterBlanks grid) $ intersectingHouses house
     let shared = house `intersect` other
-        alignedNotes =
-          ((\\) `on` notesUnion grid) shared (house \\ other)
-        changes =
-          filter (validChange grid) $
-          RemoveNote <$> (other \\ shared) <*> alignedNotes
-    guard $ not $ null changes
-    return $ Just changes
+        alignedNotes = ((\\) `on` notesUnion grid) shared (house \\ other)
+    return $
+      makeRecommendation grid $
+      RemoveNote <$> (other \\ shared) <*> alignedNotes
+
+xWing :: Recommender
+xWing grid =
+  asum $ do
+    n <- [1 .. 9]
+    let housesWith2Cells = housesWithAOrFewerOfNoteB 2 n grid
+    h@[pos1@(r1, c1), pos2@(r2, c2)] <- housesWith2Cells
+    [pos3@(r3, c3), pos4@(r4, c4)] <- housesWith2Cells \\ [h]
+    guard $ isRectangle pos1 pos2 pos3 pos4
+    let otherCells =
+          foldr union [] [row r1, row r4, col c1, col c4] \\
+          [pos1, pos2, pos3, pos4]
+    return $ makeRecommendation grid $ RemoveNote <$> otherCells <*> [n]
 
 {-
 BUG stands for 'bi-value universal grave'. It says that any grid where the
 remaining cells all have 2 notes is invalid, as that grid can have two
 solutions. This isn't immediately intuitive, but if you go through it manually,
 you'll see that it's true.
-As such, whenever a grid has remaining cells such that all have two notes except
+As such, whenever a grid has remaining cells such that all have two notes except'
 one, which has three, you can fill in that cell with the note it shares with two
 other cells in any given house.
 -}
@@ -183,4 +210,11 @@ bug grid =
 overallRecommender :: Recommender
 overallRecommender grid = asum $ map ($ grid) solvers
   where
-    solvers = [nakedSingle, hiddenSingle, nakedSubset, intersection, bug]
+    solvers =
+      [ nakedSingle
+      , hiddenSingle
+      , nakedSubset
+      , intersection
+      , xWing
+      , bug
+      ]

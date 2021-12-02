@@ -121,6 +121,52 @@ testGrid6 =
     , 0, 0, 5, 6, 0, 1, 7, 2, 0
     ]
 
+-- Creates a X Wing in rows 2 and 6
+testGrid7 :: Grid
+testGrid7 =
+  acceptRecommendation
+    [ RemoveNote (4,8) 3
+    , RemoveNote (4,8) 7
+    , RemoveNote (5,8) 3
+    , RemoveNote (5,8) 7
+    , RemoveNote (5,8) 9
+    , RemoveNote (5,1) 3
+    ] $
+  numsToGrid
+    [ 1, 0, 0, 0, 0, 0, 5, 6, 9
+    , 4, 9, 2, 0, 5, 6, 1, 0, 8
+    , 0, 5, 6, 1, 0, 9, 2, 4, 0
+    , 0, 0, 9, 6, 4, 0, 8, 0, 1
+    , 0, 6, 4, 0, 1, 0, 0, 0, 0
+    , 2, 1, 8, 0, 3, 5, 6, 0, 4
+    , 0, 4, 0, 5, 0, 0, 0, 1, 6
+    , 9, 0, 5, 0, 6, 1, 4, 0, 2
+    , 6, 2, 1, 0, 0, 0, 0, 0, 5
+    ]
+
+-- Creates a X Wing in columns 5 and 8
+testGrid8 :: Grid
+testGrid8 =
+  acceptRecommendation
+    [ RemoveNote (2,3) 3
+    , RemoveNote (2,6) 3
+    , RemoveNote (1,7) 3
+    , RemoveNote (3,7) 3
+    , RemoveNote (7,7) 6
+    , RemoveNote (8,7) 6
+    ] $
+  numsToGrid
+    [ 0, 2, 0, 0, 0, 0, 0, 9, 4
+    , 7, 6, 0, 9, 1, 0, 0, 5, 0
+    , 0, 9, 0, 0, 0, 2, 0, 8, 1
+    , 0, 7, 0, 0, 5, 0, 0, 1, 0
+    , 0, 0, 0, 7, 0, 9, 0, 0, 0
+    , 0, 8, 0, 0, 3, 1, 0, 6, 7
+    , 2, 4, 0, 1, 0, 0, 0, 7, 0
+    , 0, 1, 0, 0, 9, 0, 0, 4, 5
+    , 9, 0, 0, 0, 0, 0, 1, 0 ,0
+    ]
+
 solvedGrid =
   numsToGrid
     [ 6, 9, 4, 1, 7, 5, 8, 2, 3

@@ -31,7 +31,7 @@ codebase, rather than reinvent the wheel.
   - [x] hidden single
   - [x] naked pair/triple/etc.
   - [x] hidden pair/triple/etc.
-  - [ ] x-wing
+  - [x] x-wing
   - [x] intersection
   - [x] BUG +1 - should be fairly straightforward
     - It was not fairly straightforward
