@@ -18,6 +18,7 @@ codebase, rather than reinvent the wheel.
 
 - [x] Add `solve` function
 - [x] Add `isFinished` function
+- [x] Add tests
 - [ ] Strong lines for separating squares of 3x3 blocks
 - [ ] GUI instead of creating svg images
 - [ ] Make it impossible to change givens

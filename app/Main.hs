@@ -7,4 +7,4 @@ import Rendering
 import TestGrids
 
 main :: IO ()
-main = renderSVG "output.svg" (dims2D 800 400) (renderSolution testGrid6)
+main = renderSVG "output.svg" (dims2D 800 400) (renderSolution testGrid4)

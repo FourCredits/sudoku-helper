@@ -67,7 +67,8 @@ test-suite sudoku-helper-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      array
+      HUnit
+    , array
     , base >=4.7 && <5
     , diagrams
     , diagrams-lib

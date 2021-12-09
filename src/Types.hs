@@ -16,7 +16,7 @@ type Grid = Array Position Cell
 data Change
   = RemoveNote Position Int
   | FillInNum Position Int
-  deriving (Show, Eq)
+  deriving (Show, Eq, Ord)
 
 type Recommendation = [Change]
 

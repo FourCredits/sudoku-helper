@@ -114,6 +114,17 @@ isRectangle (r1, c1) (r2, c2) (r3, c3) (r4, c4) =
   (r1 == r2 && r3 == r4 && c1 == c3 && c2 == c4) ||
   (c1 == c2 && c3 == c4 && r1 == r3 && r2 == r4)
 
+numsToGrid :: [Int] -> Grid
+numsToGrid = updateNotes . listArray ((1, 1), (9, 9)) . map makeCell
+  where
+    makeCell :: Int -> Cell
+    makeCell n =
+      Cell
+        (if inRange (1, 9) n
+           then Just n
+           else Nothing)
+        [1 .. 9]
+
 {-
 Continuously apply the recommender, until it either can't generate new
 recommendations, or it completes the grid. Returns (rs, grid), where rs is the
